@@ -1,0 +1,11 @@
+/target
+/saves
+*.log
+.DS_Store
+Thumbs.db
+
+# Éditeurs & outils locaux
+.vscode/
+.idea/
+*.swp
+.claude/

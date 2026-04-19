@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Magic Adventure — RPG voxel d'aventure et de magie</title>
+<meta name="description" content="My Magic Adventure : un RPG voxel inspiré de Minecraft, 5 races jouables, 6 éléments de magie, monde infini. Développé en Rust + Bevy.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Cinzel:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-0: #0a0713;
+    --bg-1: #14102a;
+    --bg-2: #1c1638;
+    --accent-fire: #ff6b2c;
+    --accent-water: #4ac8ff;
+    --accent-earth: #7ab54a;
+    --accent-air: #e4f0ff;
+    --accent-light: #ffd666;
+    --accent-shadow: #9b5cff;
+    --text: #e8e4f5;
+    --text-dim: #9c96b5;
+    --border: rgba(155, 92, 255, 0.25);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'VT323', 'Courier New', monospace;
+    font-size: 20px;
+    line-height: 1.6;
+    color: var(--text);
+    background: var(--bg-0);
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(255, 107, 44, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 90%, rgba(155, 92, 255, 0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(74, 200, 255, 0.04) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { position: relative; z-index: 1; }
+
+  /* ---------- HERO ---------- */
+  header.hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 1rem;
+    position: relative;
+  }
+
+  .hero-title {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: clamp(2.5rem, 7vw, 5.5rem);
+    letter-spacing: 0.05em;
+    background: linear-gradient(135deg, #ffd666 0%, #ff6b2c 40%, #9b5cff 80%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 40px rgba(255, 107, 44, 0.3);
+    margin-bottom: 1rem;
+  }
+
+  .hero-tagline {
+    font-size: clamp(1rem, 2vw, 1.4rem);
+    color: var(--text-dim);
+    max-width: 600px;
+    margin: 0 auto 2rem;
+    font-style: italic;
+  }
+
+  .hero-badges {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+
+  .badge {
+    padding: 0.4rem 1rem;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+  }
+
+  .badge.alpha { color: var(--accent-fire); border-color: var(--accent-fire); }
+  .badge.rust  { color: var(--accent-earth); border-color: var(--accent-earth); }
+  .badge.bevy  { color: var(--accent-water); border-color: var(--accent-water); }
+
+  .hero-cta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 0.9rem 2rem;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    text-decoration: none;
+    border: 2px solid;
+    border-radius: 2px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #ff6b2c, #9b5cff);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 20px rgba(155, 92, 255, 0.4);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 30px rgba(155, 92, 255, 0.6);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border-color: var(--border);
+  }
+
+  .btn-secondary:hover {
+    background: var(--bg-2);
+    border-color: var(--accent-shadow);
+  }
+
+  /* ---------- SECTIONS ---------- */
+  section {
+    padding: 5rem 1.5rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  h2 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 700;
+    margin-bottom: 2.5rem;
+    text-align: center;
+    color: var(--text);
+  }
+
+  h2 span {
+    background: linear-gradient(90deg, var(--accent-fire), var(--accent-shadow));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* ---------- RACES ---------- */
+  .races-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .race-card {
+    background: linear-gradient(145deg, var(--bg-1), var(--bg-2));
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .race-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--race-color, var(--accent-shadow));
+  }
+
+  .race-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--race-color, var(--accent-shadow));
+  }
+
+  .race-card.sylvaris  { --race-color: var(--accent-earth); }
+  .race-card.ignaar    { --race-color: var(--accent-fire); }
+  .race-card.aethyn    { --race-color: var(--accent-air); }
+  .race-card.vorkai    { --race-color: var(--accent-shadow); }
+  .race-card.crysthari { --race-color: var(--accent-light); }
+
+  .race-name {
+    font-family: 'Cinzel', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--race-color);
+    margin-bottom: 0.25rem;
+  }
+
+  .race-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    margin-bottom: 1rem;
+    font-style: italic;
+  }
+
+  .race-affinity {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    background: rgba(255,255,255,0.05);
+    border-radius: 3px;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  .race-desc {
+    font-size: 0.95rem;
+    color: var(--text);
+  }
+
+  /* ---------- FEATURES ---------- */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .feature {
+    padding: 1.5rem;
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  .feature-icon {
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
+  .feature-title {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: var(--accent-light);
+  }
+
+  .feature-desc { color: var(--text-dim); font-size: 0.95rem; }
+
+  /* ---------- ELEMENTS ---------- */
+  .elements-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .element {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 1rem;
+  }
+
+  .element-fire   { border-color: var(--accent-fire);   color: var(--accent-fire); }
+  .element-water  { border-color: var(--accent-water);  color: var(--accent-water); }
+  .element-earth  { border-color: var(--accent-earth);  color: var(--accent-earth); }
+  .element-air    { border-color: var(--accent-air);    color: var(--accent-air); }
+  .element-light  { border-color: var(--accent-light);  color: var(--accent-light); }
+  .element-shadow { border-color: var(--accent-shadow); color: var(--accent-shadow); }
+
+  /* ---------- CONTROLS ---------- */
+  .controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 0.75rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .key-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 1rem;
+    background: var(--bg-1);
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .key {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.65rem;
+    padding: 0.4rem 0.6rem;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-bottom: 3px solid var(--accent-shadow);
+    border-radius: 3px;
+    min-width: 38px;
+    text-align: center;
+    color: var(--accent-light);
+  }
+
+  .key-action { flex: 1; font-size: 0.95rem; }
+
+  /* ---------- INSTALL ---------- */
+  .install-box {
+    background: #07050f;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.25rem 1.5rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.95rem;
+    color: var(--accent-earth);
+    overflow-x: auto;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .install-box .prompt { color: var(--text-dim); user-select: none; }
+
+  /* ---------- FOOTER ---------- */
+  footer {
+    padding: 3rem 1rem 2rem;
+    text-align: center;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    margin-top: 4rem;
+    font-size: 0.9rem;
+  }
+
+  footer a { color: var(--accent-shadow); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* ---------- PREVIEW IMG ---------- */
+  .preview {
+    max-width: 100%;
+    margin: 2rem auto;
+    display: block;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    image-rendering: pixelated;
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: 18px; }
+    section { padding: 3rem 1rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="hero">
+    <h1 class="hero-title">My Magic Adventure</h1>
+    <p class="hero-tagline">Choisis ta race. Maîtrise les éléments. Explore un monde sans fin.</p>
+    <div class="hero-badges">
+      <span class="badge alpha">ALPHA v0.1</span>
+      <span class="badge rust">RUST 2024</span>
+      <span class="badge bevy">BEVY 0.15</span>
+    </div>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="https://github.com/Djibzi/my-magic-adventure">⬇ Voir sur GitHub</a>
+      <a class="btn btn-secondary" href="#races">Découvrir le jeu</a>
+    </div>
+  </header>
+
+  <section id="about">
+    <h2>Un <span>RPG voxel</span> d'aventure et de magie</h2>
+    <p style="max-width: 760px; margin: 0 auto; text-align: center; color: var(--text-dim); font-size: 1.05rem;">
+      Inspiré de Minecraft mais pensé comme un vrai RPG : tu choisis parmi cinq races aux pouvoirs distincts,
+      tu apprends à canaliser six éléments de magie, tu façonnes le monde bloc par bloc. Chaque race change
+      vraiment ta façon de jouer — vitesse, endurance, rapport à la nuit, au feu, au mana.
+    </p>
+    <img class="preview" src="img/preview.png" alt="Aperçu des blocs du jeu" width="512">
+  </section>
+
+  <section id="races">
+    <h2>Les <span>5 races</span> jouables</h2>
+    <div class="races-grid">
+
+      <article class="race-card sylvaris">
+        <h3 class="race-name">Sylvaris</h3>
+        <p class="race-subtitle">Les Éveillés de la Forêt</p>
+        <span class="race-affinity">🌿 Terre & 💧 Eau</span>
+        <p class="race-desc">Régénération passive près de la verdure. Enracine les ennemis proches avec sa compétence raciale.</p>
+      </article>
+
+      <article class="race-card ignaar">
+        <h3 class="race-name">Ignaar</h3>
+        <p class="race-subtitle">Les Forgés du Magma</p>
+        <span class="race-affinity">🔥 Feu & 🪨 Terre</span>
+        <p class="race-desc">Immunité à la lave, +15% dégâts mêlée. Peut déclencher une éruption volcanique de zone.</p>
+      </article>
+
+      <article class="race-card aethyn">
+        <h3 class="race-name">Aethyn</h3>
+        <p class="race-subtitle">Les Tisseurs du Vent</p>
+        <span class="race-affinity">💨 Air & ⚡ Foudre</span>
+        <p class="race-desc">Vitesse +20%, chutes ralenties, saut plus haut. Dash aérien à volonté.</p>
+      </article>
+
+      <article class="race-card vorkai">
+        <h3 class="race-name">Vorkai</h3>
+        <p class="race-subtitle">Les Écailles du Crépuscule</p>
+        <span class="race-affinity">🌑 Ombre & 🔥 Feu</span>
+        <p class="race-desc">Vision nocturne parfaite, bonus d'attaques furtives. Devient semi-invisible 8s.</p>
+      </article>
+
+      <article class="race-card crysthari">
+        <h3 class="race-name">Crysthari</h3>
+        <p class="race-subtitle">Les Enfants du Prisme</p>
+        <span class="race-affinity">✨ Lumière & 💧 Eau</span>
+        <p class="race-desc">+25% mana max, sorts 10% moins chers. Rayon prismatique qui ricoche sur les cristaux.</p>
+      </article>
+
+    </div>
+  </section>
+
+  <section id="elements">
+    <h2>Six <span>éléments</span>, douze sorts</h2>
+    <div class="elements-row">
+      <span class="element element-fire">🔥 Feu</span>
+      <span class="element element-water">💧 Eau</span>
+      <span class="element element-earth">🪨 Terre</span>
+      <span class="element element-air">💨 Air</span>
+      <span class="element element-light">✨ Lumière</span>
+      <span class="element element-shadow">🌑 Ombre</span>
+    </div>
+    <p style="text-align:center; margin-top: 2rem; color: var(--text-dim);">
+      Boule de Feu · Éclat de Glace · Mur de Terre · Dash du Vent · Soin Lumière · Éclat Aveuglant<br>
+      Voile d'Ombre · Drain d'Ombre · Bouclier d'Eau · Nova de Feu · Lame de Vent · Pic de Pierre
+    </p>
+  </section>
+
+  <section id="features">
+    <h2>Ce qu'il y a dans l'<span>Alpha</span></h2>
+    <div class="features-grid">
+      <div class="feature">
+        <span class="feature-icon">🌍</span>
+        <h3 class="feature-title">Monde infini</h3>
+        <p class="feature-desc">Génération procédurale par chunks, biomes variés, LOD pour voir loin.</p>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">⛏️</span>
+        <h3 class="feature-title">Construction</h3>
+        <p class="feature-desc">Casse et pose tous les blocs au raycast. Inventaire complet et hotbar.</p>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">⚔️</span>
+        <h3 class="feature-title">Combat</h3>
+        <p class="feature-desc">Mêlée + magie contre slimes, loups et humanoïdes hostiles.</p>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">🔨</span>
+        <h3 class="feature-title">Crafting</h3>
+        <p class="feature-desc">Recettes de blocs et d'outils à découvrir dans l'inventaire.</p>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">🌓</span>
+        <h3 class="feature-title">Cycle jour/nuit</h3>
+        <p class="feature-desc">Skybox dynamique, les mobs hostiles sortent quand il fait sombre.</p>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">💾</span>
+        <h3 class="feature-title">Sauvegarde</h3>
+        <p class="feature-desc">Plusieurs slots de save, tes blocs et ton perso sont persistés.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <h2>Comment y <span>jouer</span></h2>
+    <div class="install-box">
+      <span class="prompt">$</span> git clone https://github.com/Djibzi/my-magic-adventure.git<br>
+      <span class="prompt">$</span> cd my-magic-adventure<br>
+      <span class="prompt">$</span> cargo run --release
+    </div>
+    <p style="text-align:center; margin-top: 1.5rem; color: var(--text-dim); font-size: 0.95rem;">
+      Nécessite <a href="https://www.rust-lang.org/tools/install" style="color: var(--accent-fire);">Rust</a> en edition 2024. Première compilation longue, ensuite c'est rapide.
+    </p>
+  </section>
+
+  <section id="controls">
+    <h2><span>Contrôles</span></h2>
+    <div class="controls-grid">
+      <div class="key-row"><span class="key">ZQSD</span><span class="key-action">Déplacement</span></div>
+      <div class="key-row"><span class="key">␣</span><span class="key-action">Saut</span></div>
+      <div class="key-row"><span class="key">🖱 G</span><span class="key-action">Casser / frapper</span></div>
+      <div class="key-row"><span class="key">🖱 D</span><span class="key-action">Poser un bloc</span></div>
+      <div class="key-row"><span class="key">1-9</span><span class="key-action">Hotbar</span></div>
+      <div class="key-row"><span class="key">E</span><span class="key-action">Inventaire</span></div>
+      <div class="key-row"><span class="key">Z / X</span><span class="key-action">Lancer un sort</span></div>
+      <div class="key-row"><span class="key">R</span><span class="key-action">Changer de sort</span></div>
+      <div class="key-row"><span class="key">F</span><span class="key-action">Compétence raciale</span></div>
+      <div class="key-row"><span class="key">F2</span><span class="key-action">Sauvegarder</span></div>
+      <div class="key-row"><span class="key">F5</span><span class="key-action">Respawn</span></div>
+      <div class="key-row"><span class="key">Esc</span><span class="key-action">Menu / pause</span></div>
+    </div>
+  </section>
+
+  <section id="roadmap">
+    <h2>Et <span>ensuite</span> ?</h2>
+    <div class="features-grid">
+      <div class="feature">
+        <span class="feature-icon">🎵</span>
+        <h3 class="feature-title">v0.2 — Audio</h3>
+        <p class="feature-desc">SFX blocs, sorts, combat. Musique d'ambiance qui change selon le biome.</p>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">🏜️</span>
+        <h3 class="feature-title">v0.3 — Nouveaux biomes</h3>
+        <p class="feature-desc">Désert, neige, marécage avec leurs blocs et mobs uniques.</p>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">🍖</span>
+        <h3 class="feature-title">v0.4 — Survie</h3>
+        <p class="feature-desc">Faim, soif, température. Pour vraiment survivre, pas juste explorer.</p>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">⚡</span>
+        <h3 class="feature-title">Optimisations</h3>
+        <p class="feature-desc">GPU instancing, LOD plus agressif, viser les 60 FPS stables.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p><strong>My Magic Adventure</strong> — par <a href="https://github.com/Djibzi">Djibzi</a></p>
+    <p style="margin-top: 0.5rem;">Construit avec <a href="https://www.rust-lang.org/">Rust</a> et <a href="https://bevyengine.org/">Bevy</a>.</p>
+  </footer>
+
+</div>
+</body>
+</html>
