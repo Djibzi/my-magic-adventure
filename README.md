@@ -86,15 +86,6 @@ La première compilation est longue (Bevy), ensuite c'est rapide.
 
 L'Alpha tourne à **25–30 FPS** sur un PC modeste. Des optimisations (LOD plus agressif, culling, instanciation GPU) sont prévues pour la v0.2.
 
-## Roadmap (v0.2 et au-delà)
-
-- Audio : SFX blocs, sorts, combat + musique d'ambiance
-- Biomes avancés : désert, neige, marécage
-- Survie : faim, soif
-- Tutorial au premier lancement
-- Plus de sorts et d'objets craftables
-- Optimisations GPU
-
 ## État du projet
 
 Alpha jouable : 5 races + 12 sorts + monde infini + combat + crafting + sauvegarde fonctionnels. Les fondations, l'interaction avec le monde et le système de magie/combat sont en place. Polish final (audio, tutorial) reporté à la v0.2.
